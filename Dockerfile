@@ -1,7 +1,7 @@
 FROM alpine:3.15
 
 RUN apk update && apk upgrade
-RUN apk add curl && apk add git
+RUN apk add git
 
 ENV NGINX_VERSION 1.20.2
 ENV NJS_VERSION   0.7.0
@@ -122,18 +122,14 @@ COPY 20-envsubst-on-templates.sh /docker-entrypoint.d
 COPY 30-tune-worker-processes.sh /docker-entrypoint.d
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
+RUN git clone https://github.com/johnalam/F5-Data-Group-Manager /opt/f5-data-group-manager/
+RUN cp -fR /opt/f5-data-group-manager/dist/* /usr/share/nginx/html
+RUN cp -fR /opt/f5-data-group-manager/dist-user/* /usr/share/nginx/html
+RUN cp -f /opt/f5-data-group-manager/nginx/default.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
 
 STOPSIGNAL SIGQUIT
 
 CMD ["nginx", "-g", "daemon off;"]
 
-RUN mkdir -p /run/nginx
-RUN touch /run/nginx/nginx.pid
-RUN adduser -D -g 'www' www
-RUN mkdir /www 
-RUN chown -R www:www /var/lib/nginx
-RUN chown -R www:www /www
-RUN git clone https://github.com/johnalam/F5-Data-Group-Manager /opt/f5-data-group-manager/
-EXPOSE 80
-CMD ["/etc/init.d/nginx","start"]
